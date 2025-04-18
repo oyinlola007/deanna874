@@ -58,6 +58,11 @@ To run this project with Docker, you only need:
 - `docker-compose.yml`
 - `.env` file
 
+```bash
+curl -O https://raw.githubusercontent.com/oyinlola007/deanna874/main/Dockerfile
+curl -O https://raw.githubusercontent.com/oyinlola007/deanna874/main/docker-compose.yml
+```
+
 ---
 
 ### 🔧 1. Clone the Repository First
