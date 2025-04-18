@@ -1,4 +1,3 @@
-```markdown
 # Discord Engagement Bot
 
 A custom Discord bot to track and reward community engagement via messages, reactions, shares, and invites.
@@ -126,4 +125,3 @@ The bot stores its SQLite database in a `data/` folder. This is automatically mo
 ## 📜 License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
-```
