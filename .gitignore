@@ -7,7 +7,6 @@ __pycache__/
 data/*.db
 
 # Environment variables / secrets
-config.py
 .env
 
 # Logs and debug files
