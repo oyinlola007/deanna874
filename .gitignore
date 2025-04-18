@@ -1,0 +1,35 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# SQLite database
+data/*.db
+
+# Environment variables / secrets
+config.py
+.env
+
+# Logs and debug files
+*.log
+*.tmp
+
+# Virtual environment
+venv/
+env/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# PyInstaller
+dist/
+build/
+*.spec
+
+# VSCode settings
+.vscode/
+
+# Python egg metadata
+*.egg-info/
+.eggs/
