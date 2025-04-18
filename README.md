@@ -25,7 +25,24 @@ pip install -r requirements.txt
 BOT_TOKEN=your-bot-token-here
 ```
 
-4. Run the bot:
+---
+
+### ⚠️ IMPORTANT: Add an Admin
+Open `setup_db.py` and **add at least one Discord user ID as an admin** before initializing the database.
+
+Look for the section:
+```python
+# Example admin ID (replace with real admin Discord IDs)
+admin_ids = ["588443056529866818"]
+```
+Replace the value in the list with your own Discord user ID to ensure you have access to admin-only commands.
+
+---
+
+### 4. Run the bot
 ```bash
 python main.py
 ```
+
+## License
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for more information.
