@@ -127,7 +127,3 @@ The bot stores its SQLite database in a `data/` folder. This is automatically mo
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 ```
-
----
-
-Let me know if you want the README translated into reStructuredText for PyPI, or split into sections for GitHub Pages or docs!
