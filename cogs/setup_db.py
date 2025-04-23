@@ -113,7 +113,7 @@ def setup():
         )
 
     # Example admin ID (replace with real admin Discord IDs)
-    admin_ids = ["588443056529866818"]
+    admin_ids = ["1301517023846858784"]
     for admin in admin_ids:
         cursor.execute(
             "INSERT OR IGNORE INTO admin_ids (discord_id, status) VALUES (?, 'active')",

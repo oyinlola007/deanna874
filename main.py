@@ -45,7 +45,8 @@ URL_REGEX = re.compile(r"https?://\S+")
 @bot.event
 async def on_ready():
     logger.info(f"{bot.user} has connected.")
-    update_invite_cache.start()
+    if not update_invite_cache.is_running():
+        update_invite_cache.start()
 
     # Load Cogs
     extensions = [
