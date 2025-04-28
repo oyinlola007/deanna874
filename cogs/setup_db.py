@@ -92,6 +92,7 @@ def setup():
         "points_per_invite": "1000",
         "points_per_reaction": "5",
         "points_per_share": "50",
+        "points_per_image": "10",
         "notification_channel_id": "YOUR_CHANNEL_ID",
     }
 

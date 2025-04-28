@@ -230,6 +230,12 @@ class Database:
             )
         conn.commit()
 
+    def user_exists(self, discord_id: str) -> bool:
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT 1 FROM members WHERE discord_id = ?", (discord_id,))
+            return cur.fetchone() is not None
+
     def update_config(self, key: str, value: str) -> bool:
         with self._connect() as conn:
             cur = conn.cursor()

@@ -58,10 +58,14 @@ async def on_ready():
 
     for ext in extensions:
         try:
-            await bot.load_extension(ext)
-            logger.info(f"✅ Loaded extension: {ext}")
+            if ext in bot.extensions:
+                await bot.reload_extension(ext)
+                logger.info(f"🔁 Reloaded extension: {ext}")
+            else:
+                await bot.load_extension(ext)
+                logger.info(f"✅ Loaded extension: {ext}")
         except Exception as e:
-            logger.error(f"❌ Failed to load {ext}: {e}")
+            logger.error(f"❌ Failed to (re)load {ext}: {e}")
 
 
 def is_admin():
@@ -128,18 +132,38 @@ async def on_message(message):
 
     if dao.is_tracked_channel(str(message.channel.id)):
         user_id = str(message.author.id)
-        POINT_VALUE = int(dao.get_config("points_per_message") or 1)
-        dao.add_points_to_member(user_id, POINT_VALUE)
-        dao.log_engagement(
-            user_id, "message", str(message.id), str(message.channel.id), POINT_VALUE
-        )
+        channel_id = str(message.channel.id)
+        message_id = str(message.id)
 
-        # Detect shared content
-        if URL_REGEX.search(message.content):
-            POINT_VALUE = int(dao.get_config("points_per_share") or 50)
-            dao.add_points_to_member(user_id, POINT_VALUE)
+        logged = False  # flag to prevent double logging
+
+        # 1. Track image
+        if message.attachments:
+            for attachment in message.attachments:
+                if attachment.content_type and attachment.content_type.startswith(
+                    "image/"
+                ):
+                    image_points = int(dao.get_config("points_per_image") or 10)
+                    dao.add_points_to_member(user_id, image_points)
+                    dao.log_engagement(
+                        user_id, "image", message_id, channel_id, image_points
+                    )
+                    logged = True
+                    break  # log once per message
+
+        # 2. Track shared URL
+        elif URL_REGEX.search(message.content):
+            share_points = int(dao.get_config("points_per_share") or 50)
+            dao.add_points_to_member(user_id, share_points)
+            dao.log_engagement(user_id, "share", message_id, channel_id, share_points)
+            logged = True
+
+        # 3. Fallback to regular message if no image or URL
+        if not logged:
+            message_points = int(dao.get_config("points_per_message") or 5)
+            dao.add_points_to_member(user_id, message_points)
             dao.log_engagement(
-                user_id, "share", str(message.id), str(message.channel.id), POINT_VALUE
+                user_id, "message", message_id, channel_id, message_points
             )
 
         await check_and_notify_milestone(user_id)

@@ -121,8 +121,12 @@ class AdminCommands(commands.Cog):
 
         desc = ""
         for i, (user_id, score) in enumerate(top_users, start=1):
-            user = await self.bot.fetch_user(int(user_id))
-            desc += f"**{i}. {user.name}** — {score} points\n"
+            try:
+                user = await self.bot.fetch_user(int(user_id))
+                username = user.name
+            except Exception:
+                username = f"Unknown User ({user_id})"
+            desc += f"**{i}. {username}** — {score} points\n"
 
         embed = discord.Embed(title="🏆 Leaderboard", description=desc, color=0x00FF00)
         await ctx.send(embed=embed)
