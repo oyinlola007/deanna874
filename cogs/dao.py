@@ -202,6 +202,7 @@ class Database:
         with self._connect() as conn:
             cur = conn.cursor()
             cur.execute("UPDATE members SET total_points = 0")
+            cur.execute("DELETE from milestones_log")
             conn.commit()
 
     def set_user_points(self, discord_id: str, amount: int):
