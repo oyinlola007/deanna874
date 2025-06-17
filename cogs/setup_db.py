@@ -94,6 +94,7 @@ def setup():
         "points_per_share": "50",
         "points_per_image": "10",
         "notification_channel_id": "YOUR_CHANNEL_ID",
+        "daily_points_limit": str(config.DEFAULT_DAILY_POINTS_LIMIT),
     }
 
     for key, value in default_config.items():
