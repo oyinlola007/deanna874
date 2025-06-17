@@ -248,7 +248,30 @@ class Database:
         with self._connect() as conn:
             cur = conn.cursor()
             cur.execute("SELECT key, value FROM config")
-            return {key: value for key, value in cur.fetchall()}
+            return dict(cur.fetchall())
+
+    def get_daily_points(self, discord_id: str) -> int:
+        """Get the total points earned by a user in the last 24 hours."""
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT COALESCE(SUM(point_value), 0)
+                FROM engagement_log
+                WHERE discord_id = ?
+                AND timestamp >= datetime('now', '-1 day')
+                """,
+                (discord_id,),
+            )
+            return cur.fetchone()[0]
+
+    def can_earn_points(self, discord_id: str, points_to_add: int) -> bool:
+        """Check if a user can earn more points today."""
+        daily_limit = int(
+            self.get_config("daily_points_limit") or config.DEFAULT_DAILY_POINTS_LIMIT
+        )
+        current_daily_points = self.get_daily_points(discord_id)
+        return (current_daily_points + points_to_add) <= daily_limit
 
     def get_active_milestones(self) -> List[int]:
         with self._connect() as conn:

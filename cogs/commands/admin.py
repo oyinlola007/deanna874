@@ -21,6 +21,7 @@ class AdminCommands(commands.Cog):
 !setpoints <user_id> <amount>           - Set a user's point total
 !addpoints <user_id> <amount>           - Add points to a user
 !removepoints <user_id> <amount>        - Remove points from a user
+!setdailylimit <amount>                 - Set daily points limit (default: 1000)
 
 ⚙️ Configuration
 !setconfig <key> <value>                - Update config values
@@ -130,6 +131,22 @@ class AdminCommands(commands.Cog):
 
         embed = discord.Embed(title="🏆 Leaderboard", description=desc, color=0x00FF00)
         await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.check(lambda ctx: dao.is_admin(str(ctx.author.id)))
+    async def setdailylimit(self, ctx, amount: str = None):
+        """Set the daily points limit for all users."""
+        if not amount or not amount.isdigit():
+            await ctx.send("Usage: !setdailylimit <amount>")
+            return
+
+        limit = int(amount)
+        if limit < 0:
+            await ctx.send("❌ Daily limit cannot be negative.")
+            return
+
+        dao.set_config("daily_points_limit", str(limit))
+        await ctx.send(f"✅ Daily points limit set to {limit}")
 
 
 async def setup(bot):

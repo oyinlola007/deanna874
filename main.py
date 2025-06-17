@@ -144,27 +144,32 @@ async def on_message(message):
                     "image/"
                 ):
                     image_points = int(dao.get_config("points_per_image") or 10)
-                    dao.add_points_to_member(user_id, image_points)
-                    dao.log_engagement(
-                        user_id, "image", message_id, channel_id, image_points
-                    )
-                    logged = True
+                    if dao.can_earn_points(user_id, image_points):
+                        dao.add_points_to_member(user_id, image_points)
+                        dao.log_engagement(
+                            user_id, "image", message_id, channel_id, image_points
+                        )
+                        logged = True
                     break  # log once per message
 
         # 2. Track shared URL
         elif URL_REGEX.search(message.content):
             share_points = int(dao.get_config("points_per_share") or 50)
-            dao.add_points_to_member(user_id, share_points)
-            dao.log_engagement(user_id, "share", message_id, channel_id, share_points)
-            logged = True
+            if dao.can_earn_points(user_id, share_points):
+                dao.add_points_to_member(user_id, share_points)
+                dao.log_engagement(
+                    user_id, "share", message_id, channel_id, share_points
+                )
+                logged = True
 
         # 3. Fallback to regular message if no image or URL
         if not logged:
             message_points = int(dao.get_config("points_per_message") or 5)
-            dao.add_points_to_member(user_id, message_points)
-            dao.log_engagement(
-                user_id, "message", message_id, channel_id, message_points
-            )
+            if dao.can_earn_points(user_id, message_points):
+                dao.add_points_to_member(user_id, message_points)
+                dao.log_engagement(
+                    user_id, "message", message_id, channel_id, message_points
+                )
 
         await check_and_notify_milestone(user_id)
 
@@ -184,11 +189,14 @@ async def on_reaction_add(reaction, user):
     if dao.is_tracked_channel(channel_id):
         if not dao.has_user_reacted_to_message(user_id, message_id):
             POINT_VALUE = int(dao.get_config("points_per_reaction") or 5)
-            dao.add_points_to_member(user_id, POINT_VALUE)
-            dao.log_engagement(user_id, "reaction", message_id, channel_id, POINT_VALUE)
-            logger.info(f"[INFO] Reaction logged and points awarded to {user.name}")
+            if dao.can_earn_points(user_id, POINT_VALUE):
+                dao.add_points_to_member(user_id, POINT_VALUE)
+                dao.log_engagement(
+                    user_id, "reaction", message_id, channel_id, POINT_VALUE
+                )
+                logger.info(f"[INFO] Reaction logged and points awarded to {user.name}")
 
-            await check_and_notify_milestone(user_id)
+                await check_and_notify_milestone(user_id)
 
 
 # 3. Track invites (when new member joins)
@@ -211,15 +219,20 @@ async def on_member_join(member):
                 # Only award points if this inviter hasn't already invited this member
                 if not dao.has_invited_before(inviter_id, invitee_id):
                     POINT_VALUE = int(dao.get_config("points_per_invite") or 1000)
-                    dao.add_points_to_member(inviter_id, POINT_VALUE)
-                    dao.log_engagement(
-                        inviter_id, "invite", invite_key, "N/A", POINT_VALUE
-                    )
-                    logger.info(
-                        f"[INFO] {inviter} earned {POINT_VALUE} points for inviting {member}"
-                    )
+                    if dao.can_earn_points(inviter_id, POINT_VALUE):
+                        dao.add_points_to_member(inviter_id, POINT_VALUE)
+                        dao.log_engagement(
+                            inviter_id, "invite", invite_key, "N/A", POINT_VALUE
+                        )
+                        logger.info(
+                            f"[INFO] {inviter} earned {POINT_VALUE} points for inviting {member}"
+                        )
 
-                    await check_and_notify_milestone(inviter_id)
+                        await check_and_notify_milestone(inviter_id)
+                    else:
+                        logger.info(
+                            f"[SKIP] {inviter} has reached daily points limit — no points awarded for invite."
+                        )
                 else:
                     logger.info(
                         f"[SKIP] {inviter} already invited {member} before — no points awarded."
