@@ -18,10 +18,10 @@ import cogs.setup_db as setup_db
 
 
 # Setup DB if missing
-if not os.path.exists(config.DATABASE_NAME):
-    os.makedirs(os.path.dirname(config.DATABASE_NAME), exist_ok=True)
-    setup_db.setup()
-
+# if not os.path.exists(config.DATABASE_NAME):
+#     os.makedirs(os.path.dirname(config.DATABASE_NAME), exist_ok=True)
+#     setup_db.setup()
+setup_db.setup()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
