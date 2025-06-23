@@ -3,7 +3,7 @@ import cogs.config as config
 
 
 # Create tables
-def setup():
+def setup(logger):
     # Connect to SQLite database (will create it if it doesn't exist)
     conn = sqlite3.connect(config.DATABASE_NAME)
     cursor = conn.cursor()
@@ -134,6 +134,6 @@ def setup():
     conn.commit()
     conn.close()
 
-    print(
+    logger.info(
         "✅ Database initialized successfully with config, milestones, admins, and tracked channels."
     )
