@@ -30,6 +30,7 @@ class AdminCommands(commands.Cog):
 🏆 Milestones
 !listmilestones                         - Show milestone thresholds
 !addmilestone <value> <message>         - Create new milestone
+!removemilestone <value>                - Remove (deactivate) a milestone
 !setmilestonemessage <value> <message>  - Set/update milestone message
 !markrewarded <reward_code>             - Mark reward as sent
 !pendingrewards                         - List users awaiting rewards
@@ -44,8 +45,13 @@ class AdminCommands(commands.Cog):
 !addadmin <user_id>                     - Add a new admin
 !removeadmin <user_id>                  - Remove an admin
 
+🚫 Leaderboard Exclusion
+!excludeuser <user_id>                  - Exclude a user from leaderboard
+!includeuser <user_id>                  - Include a user back in leaderboard
+!excludedusers                          - List excluded users
+
 🏅 Leaderboard
-!leaderboard                            - View top users by points
+!leaderboard                            - View top users by points (everyone)
 
 📦 Utilities
 !exportdb                               - Export the database file```"""
@@ -114,6 +120,37 @@ class AdminCommands(commands.Cog):
 
     @commands.command()
     @commands.check(lambda ctx: dao.is_admin(str(ctx.author.id)))
+    async def excludeuser(self, ctx, user_id: str = None):
+        if not user_id or not user_id.isdigit():
+            await ctx.send("Usage: !excludeuser <user_id>")
+            return
+        if dao.add_excluded_leaderboard_user(user_id):
+            await ctx.send(f"✅ User {user_id} excluded from leaderboard.")
+        else:
+            await ctx.send(f"❌ User {user_id} is already excluded.")
+
+    @commands.command()
+    @commands.check(lambda ctx: dao.is_admin(str(ctx.author.id)))
+    async def includeuser(self, ctx, user_id: str = None):
+        if not user_id or not user_id.isdigit():
+            await ctx.send("Usage: !includeuser <user_id>")
+            return
+        if dao.remove_excluded_leaderboard_user(user_id):
+            await ctx.send(f"✅ User {user_id} included in leaderboard.")
+        else:
+            await ctx.send(f"❌ User {user_id} was not excluded.")
+
+    @commands.command()
+    @commands.check(lambda ctx: dao.is_admin(str(ctx.author.id)))
+    async def excludedusers(self, ctx):
+        excluded = dao.get_excluded_leaderboard_users()
+        if not excluded:
+            await ctx.send("No users are currently excluded from the leaderboard.")
+            return
+        lines = [f"<@{uid}> — `{uid}`" for uid in excluded]
+        await ctx.send("🚫 **Excluded from Leaderboard:**\n" + "\n".join(lines))
+
+    @commands.command()
     async def leaderboard(self, ctx):
         top_users = dao.get_leaderboard()
         if not top_users:
@@ -147,6 +184,21 @@ class AdminCommands(commands.Cog):
 
         dao.set_config("daily_points_limit", str(limit))
         await ctx.send(f"✅ Daily points limit set to {limit}")
+
+    @commands.command()
+    @commands.check(lambda ctx: dao.is_admin(str(ctx.author.id)))
+    async def removemilestone(self, ctx, value: str = None):
+        """Set a milestone's status to inactive (removes it from active milestones)."""
+        if not value or not value.isdigit():
+            await ctx.send("Usage: !removemilestone <value>")
+            return
+        value_int = int(value)
+        if dao.update_milestone_status(value_int, "inactive"):
+            await ctx.send(
+                f"✅ Milestone {value_int} has been removed (set to inactive)."
+            )
+        else:
+            await ctx.send(f"❌ Milestone {value_int} not found.")
 
 
 async def setup(bot):

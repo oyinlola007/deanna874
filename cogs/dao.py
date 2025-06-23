@@ -123,6 +123,7 @@ class Database:
                 """
                 SELECT discord_id, total_points
                 FROM members
+                WHERE discord_id NOT IN (SELECT discord_id FROM excluded_leaderboard)
                 ORDER BY total_points DESC
                 LIMIT ?
                 """,
@@ -273,14 +274,6 @@ class Database:
         current_daily_points = self.get_daily_points(discord_id)
         return (current_daily_points + points_to_add) <= daily_limit
 
-    def get_active_milestones(self) -> List[int]:
-        with self._connect() as conn:
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT value FROM milestones WHERE status = 'active' ORDER BY value ASC"
-            )
-            return [row[0] for row in cur.fetchall()]
-
     def get_active_milestones(self) -> List[Tuple[int, Optional[str]]]:
         with self._connect() as conn:
             cur = conn.cursor()
@@ -406,4 +399,53 @@ class Database:
                 conn.commit()
                 return True
             except sqlite3.IntegrityError:
-                return False  # milestone already exists
+                # Check if milestone exists and is inactive
+                cur.execute("SELECT status FROM milestones WHERE value = ?", (value,))
+                row = cur.fetchone()
+                if row and row[0] == "inactive":
+                    cur.execute(
+                        "UPDATE milestones SET status = 'active', message = ? WHERE value = ?",
+                        (message, value),
+                    )
+                    conn.commit()
+                    return True
+                return False  # milestone already exists and is active
+
+    def update_milestone_status(self, value: int, status: str) -> bool:
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE milestones SET status = ? WHERE value = ?",
+                (status, value),
+            )
+            conn.commit()
+            return cur.rowcount > 0
+
+    def add_excluded_leaderboard_user(self, discord_id: str) -> bool:
+        with self._connect() as conn:
+            cur = conn.cursor()
+            try:
+                cur.execute(
+                    "INSERT INTO excluded_leaderboard (discord_id) VALUES (?)",
+                    (discord_id,),
+                )
+                conn.commit()
+                return True
+            except sqlite3.IntegrityError:
+                return False  # already excluded
+
+    def remove_excluded_leaderboard_user(self, discord_id: str) -> bool:
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                "DELETE FROM excluded_leaderboard WHERE discord_id = ?",
+                (discord_id,),
+            )
+            conn.commit()
+            return cur.rowcount > 0
+
+    def get_excluded_leaderboard_users(self) -> List[str]:
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT discord_id FROM excluded_leaderboard")
+            return [row[0] for row in cur.fetchall()]

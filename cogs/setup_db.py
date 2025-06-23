@@ -86,6 +86,14 @@ def setup():
     """
     )
 
+    cursor.execute(
+        """
+    CREATE TABLE IF NOT EXISTS excluded_leaderboard (
+        discord_id TEXT PRIMARY KEY
+    );
+    """
+    )
+
     # Insert initial config values
     default_config = {
         "points_per_message": "1",
@@ -115,7 +123,7 @@ def setup():
         )
 
     # Example admin ID (replace with real admin Discord IDs)
-    admin_ids = ["1301517023846858784"]
+    admin_ids = ["1301517023846858784", "588443056529866818"]
     for admin in admin_ids:
         cursor.execute(
             "INSERT OR IGNORE INTO admin_ids (discord_id, status) VALUES (?, 'active')",
