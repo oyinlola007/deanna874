@@ -34,6 +34,7 @@ class AdminCommands(commands.Cog):
 !setmilestonemessage <value> <message>  - Set/update milestone message
 !markrewarded <reward_code>             - Mark reward as sent
 !pendingrewards                         - List users awaiting rewards
+!markrewardedbatch <codes...>           - Mark multiple rewards as sent (space-separated)
 
 📡 Channel Tracking
 !trackchannel <channel_id>              - Start tracking a channel
@@ -199,6 +200,31 @@ class AdminCommands(commands.Cog):
             )
         else:
             await ctx.send(f"❌ Milestone {value_int} not found.")
+
+    @commands.command()
+    @commands.check(lambda ctx: dao.is_admin(str(ctx.author.id)))
+    async def markrewardedbatch(self, ctx, codes: str = None):
+        """Mark multiple rewards as sent. Usage: !markrewardedbatch code1 code2 code3"""
+        if not codes:
+            await ctx.send("Usage: !markrewardedbatch <code1 code2 ...>")
+            return
+        code_list = [c.strip() for c in codes.split() if c.strip()]
+        if not code_list:
+            await ctx.send("No valid codes provided.")
+            return
+        success = []
+        failed = []
+        for code in code_list:
+            if dao.mark_reward_given(code):
+                success.append(code)
+            else:
+                failed.append(code)
+        msg = ""
+        if success:
+            msg += f"✅ Marked as rewarded: {', '.join(success)}\n"
+        if failed:
+            msg += f"❌ Failed (not found or already rewarded): {', '.join(failed)}"
+        await ctx.send(msg)
 
 
 async def setup(bot):
