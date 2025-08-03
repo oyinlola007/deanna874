@@ -1,5 +1,6 @@
 from discord.ext import commands
-from cogs.dao import Database
+import discord
+from src.core.database import Database
 
 dao = Database()
 

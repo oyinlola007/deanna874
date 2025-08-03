@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 # SQLite database
-data/*.db
+data/
 
 # Environment variables / secrets
 .env
@@ -32,3 +32,8 @@ build/
 # Python egg metadata
 *.egg-info/
 .eggs/
+
+.cursorignore
+/docs/
+*.ipynb
+.DS_Store

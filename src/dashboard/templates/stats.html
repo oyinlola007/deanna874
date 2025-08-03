@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Compact Stats Dashboard -->
+<div class="card neumorph">
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center">
+            <img src="{{ user.avatar_url|default('https://cdn.discordapp.com/embed/avatars/0.png') }}" 
+                 alt="{{ user.name }}" class="avatar-lg mr-3">
+            <div>
+                <h2 class="text-xl font-bold">{{ user.name }}</h2>
+                <p class="text-primary">Level {{ user.level|default(1) }}</p>
+            </div>
+        </div>
+        <div class="text-right">
+            <div class="stat-value">{{ user.points|default(0) }}</div>
+            <div class="stat-label">Points</div>
+        </div>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+        <div class="stat-item">
+            <div class="stat-value">{{ stats.messages|default(0) }}</div>
+            <div class="stat-label">Messages</div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-value">{{ stats.reactions|default(0) }}</div>
+            <div class="stat-label">Reactions</div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-value">{{ stats.streak|default(0) }}</div>
+            <div class="stat-label">Streak</div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-value">{{ user.rank|default('N/A') }}</div>
+            <div class="stat-label">Rank</div>
+        </div>
+    </div>
+    
+    <!-- Progress Bars -->
+    <div class="mt-4">
+        <h3 class="text-lg font-semibold mb-2">Progress</h3>
+        
+        <!-- Level Progress -->
+        <div class="mb-3">
+            <div class="flex justify-between text-sm mb-1">
+                <span>Level Progress</span>
+                <span>{{ progress.level_percentage|default(0) }}%</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" style="width: {{ progress.level_percentage|default(0) }}%"></div>
+            </div>
+        </div>
+        
+        <!-- Daily Progress -->
+        <div class="mb-3">
+            <div class="flex justify-between text-sm mb-1">
+                <span>Daily Progress</span>
+                <span>{{ progress.daily_percentage|default(0) }}%</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" style="width: {{ progress.daily_percentage|default(0) }}%"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Next Milestone -->
+    {% if next_milestone %}
+    <div class="mt-4 p-3 bg-blue-50 rounded">
+        <h4 class="font-semibold text-blue-800">Next Milestone</h4>
+        <p class="text-sm text-blue-600">{{ next_milestone.name }} - {{ next_milestone.points_required }} points</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

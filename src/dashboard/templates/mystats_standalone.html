@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTP Trading Stats</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Embedded CSS from neumorphism.css -->
+    <style>
+        {{ css_content }}
+    </style>
+</head>
+<body class="mystats-standalone">
+    <!-- Main Stats Card -->
+    <div class="header-section">
+        <!-- User Information Section -->
+        <div class="user-info">
+            <img src="{{ user.avatar_url|default('https://cdn.discordapp.com/embed/avatars/0.png') }}" 
+                 alt="{{ user.name }}" class="avatar">
+            <div class="user-details">
+                <div class="username">{{ user.name }}</div>
+                {% if user.role %}
+                <div class="user-role">{{ user.role }}</div>
+                {% endif %}
+                <div class="join-date">Joined {{ user.join_date|default('Jan 12, 2024') }}</div>
+            </div>
+        </div>
+        
+        <!-- XP Progress Section -->
+        <div class="xp-section">
+            <div class="xp-text">{{ user.total_points|default(0) }} XP</div>
+            <div class="xp-progress-container">
+                <div class="xp-progress-bar" style="width: {{ progress.level_percentage|default(49) }}%"></div>
+            </div>
+            {% if progress.next_level_points %}
+            <div class="xp-remaining">{{ progress.next_level_points - user.total_points|default(0) }} XP to Level {{ progress.current_level|default(8) + 1 }}</div>
+            {% endif %}
+            <div class="level-indicator">Level {{ progress.current_level|default(8) }}</div>
+            {% if progress.next_reward %}
+            <div class="next-reward">{{ progress.next_reward }}</div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html> 
