@@ -60,6 +60,14 @@ class DashboardCommands(commands.Cog):
         try:
             user_id = str(interaction.user.id)
 
+            # Check if guild is available
+            if not interaction.guild:
+                await interaction.followup.send(
+                    "❌ This command can only be used in a server.",
+                    ephemeral=False,
+                )
+                return
+
             # Generate fresh dashboard data
             user_data = await self._get_user_dashboard_data(interaction)
 
@@ -85,6 +93,14 @@ class DashboardCommands(commands.Cog):
 
         try:
             user_id = str(interaction.user.id)
+
+            # Check if guild is available
+            if not interaction.guild:
+                await interaction.followup.send(
+                    "❌ This command can only be used in a server.",
+                    ephemeral=False,
+                )
+                return
 
             # Generate fresh mystats data
             user_data = await self._get_user_mystats_data(interaction)
@@ -426,7 +442,7 @@ class DashboardCommands(commands.Cog):
             "weekly_invites": [0] * 7,
         }
 
-    def _get_user_role_name(self, user: discord.Member) -> Optional[str]:
+    def _get_user_role_name(self, user) -> Optional[str]:
         """Get the user's milestone role name, if any."""
         user_id = str(user.id)
 
@@ -434,10 +450,15 @@ class DashboardCommands(commands.Cog):
         milestone_role = self.dao.get_user_milestone_role_name(user_id)
 
         # Check if user actually has this role in Discord
-        if milestone_role != "Active Trader":
-            role = discord.utils.get(user.roles, name=milestone_role)
-            if role:
-                return milestone_role
+        # Only check roles if user is a Member (has roles attribute)
+        if milestone_role != "Active Trader" and hasattr(user, "roles"):
+            try:
+                role = discord.utils.get(user.roles, name=milestone_role)
+                if role:
+                    return milestone_role
+            except AttributeError:
+                # User doesn't have roles attribute (might be User instead of Member)
+                pass
 
         # No milestone role found or user doesn't have the role
         return None
@@ -540,6 +561,9 @@ class DashboardCommands(commands.Cog):
                 await page.screenshot(path=str(output_path), full_page=True, type="png")
 
                 await browser.close()
+        except Exception as e:
+            logger.error(f"Playwright browser error: {e}")
+            raise Exception(f"Image generation failed - browser not available: {e}")
 
         finally:
             # Clean up temporary HTML file
@@ -586,6 +610,9 @@ class DashboardCommands(commands.Cog):
                     )
 
                 await browser.close()
+        except Exception as e:
+            logger.error(f"Playwright browser error: {e}")
+            raise Exception(f"Image generation failed - browser not available: {e}")
 
         finally:
             # Clean up temporary HTML file

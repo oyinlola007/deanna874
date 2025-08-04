@@ -58,6 +58,14 @@ class SlashLeaderboardCommands(commands.Cog):
         try:
             user_id = str(interaction.user.id)
 
+            # Check if guild is available
+            if not interaction.guild:
+                await interaction.followup.send(
+                    "❌ This command can only be used in a server.",
+                    ephemeral=False,
+                )
+                return
+
             # Generate fresh leaderboard data
             leaderboard_data = await self._get_leaderboard_data(interaction)
 
@@ -111,7 +119,13 @@ class SlashLeaderboardCommands(commands.Cog):
         leaderboard = []
         for user in top_users:
             # Get user's Discord member object for avatar and role
-            member = interaction.guild.get_member(int(user["discord_id"]))
+            member = None
+            if interaction.guild:
+                try:
+                    member = interaction.guild.get_member(int(user["discord_id"]))
+                except (ValueError, AttributeError) as e:
+                    logger.warning(f"Error getting member {user['discord_id']}: {e}")
+                    member = None
 
             user_data = {
                 "user_id": user["discord_id"],
@@ -214,6 +228,9 @@ class SlashLeaderboardCommands(commands.Cog):
                     )
 
                 await browser.close()
+        except Exception as e:
+            logger.error(f"Playwright browser error: {e}")
+            raise Exception(f"Image generation failed - browser not available: {e}")
 
         finally:
             # Clean up temporary HTML file
