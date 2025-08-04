@@ -132,7 +132,7 @@ class VoiceChannelDisplay(commands.Cog):
         return channels
 
     def get_top_users_display(self) -> list:
-        """Get the top 3 users formatted for display."""
+        """Get the top 3 users formatted for display with points."""
         try:
             # Get top 3 users from leaderboard
             top_users = dao.get_leaderboard(3)
@@ -149,12 +149,21 @@ class VoiceChannelDisplay(commands.Cog):
                 user = self.bot.get_user(int(discord_id))
                 username = user.display_name if user else f"User{discord_id}"
 
-                # Format: medal + username (no position text)
-                display = f"{medals[i]} {username}"
+                # Format: medal + username + points
+                display = f"{medals[i]} {username} ({points:,} XP)"
 
                 # Discord channel names have a 100 character limit
                 if len(display) > 100:
-                    display = display[:97] + "..."
+                    # If too long, try without the thousands separator
+                    display = f"{medals[i]} {username} ({points} XP)"
+
+                    # If still too long, truncate username
+                    if len(display) > 100:
+                        max_username_length = 100 - len(
+                            f"{medals[i]} ... ({points} XP)"
+                        )
+                        truncated_username = username[:max_username_length]
+                        display = f"{medals[i]} {truncated_username} ({points} XP)"
 
                 displays.append(display)
 
@@ -238,7 +247,7 @@ class VoiceChannelDisplay(commands.Cog):
     async def updatevoicedisplay(self, ctx):
         """Manually update the voice channel display."""
         await self.update_channel_name(ctx.guild)
-        await ctx.send("✅ Voice channel display updated.")
+        await ctx.send("✅ Voice channel display updated with points.")
 
     @commands.command()
     @commands.check(lambda ctx: dao.is_admin(str(ctx.author.id)))
