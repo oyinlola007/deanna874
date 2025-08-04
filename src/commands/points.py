@@ -1,5 +1,5 @@
 from discord.ext import commands
-from cogs.dao import Database
+from src.core.database import Database
 
 dao = Database()
 
@@ -45,6 +45,18 @@ class PointsCommands(commands.Cog):
             return
 
         dao.set_user_points(user_id, int(amount))
+
+        # Update user's level and check for role changes
+        dao.update_user_level(user_id, int(amount))
+
+        # Check for role assignment/downgrading
+        if hasattr(self.bot, "role_manager"):
+            await self.bot.role_manager.check_and_assign_roles(user_id, ctx.guild)
+
+        # Update voice channel display
+        if hasattr(self.bot, "voice_channel_display"):
+            await self.bot.voice_channel_display.update_channel_name(ctx.guild)
+
         await ctx.send(f"✅ Set points for user ID {user_id} to {amount}.")
 
     @commands.command()
@@ -64,6 +76,19 @@ class PointsCommands(commands.Cog):
             return
 
         dao.increment_user_points(user_id, int(amount))
+
+        # Update user's level and check for role changes
+        current_points = dao.get_user_points(user_id)
+        dao.update_user_level(user_id, current_points)
+
+        # Check for milestone and role assignment
+        if hasattr(self.bot, "role_manager"):
+            await self.bot.role_manager.check_and_assign_roles(user_id, ctx.guild)
+
+        # Update voice channel display
+        if hasattr(self.bot, "voice_channel_display"):
+            await self.bot.voice_channel_display.update_channel_name(ctx.guild)
+
         await ctx.send(f"✅ Added {amount} points to user ID {user_id}.")
 
     @commands.command()
@@ -83,6 +108,19 @@ class PointsCommands(commands.Cog):
             return
 
         dao.increment_user_points(user_id, -int(amount))
+
+        # Update user's level and check for role changes
+        current_points = dao.get_user_points(user_id)
+        dao.update_user_level(user_id, current_points)
+
+        # Check for role assignment/downgrading
+        if hasattr(self.bot, "role_manager"):
+            await self.bot.role_manager.check_and_assign_roles(user_id, ctx.guild)
+
+        # Update voice channel display
+        if hasattr(self.bot, "voice_channel_display"):
+            await self.bot.voice_channel_display.update_channel_name(ctx.guild)
+
         await ctx.send(f"✅ Removed {amount} points from user ID {user_id}.")
 
 

@@ -1,5 +1,5 @@
 import sqlite3
-import cogs.config as config
+import src.core.config as config
 
 
 # Create tables
@@ -96,11 +96,11 @@ def setup(logger):
 
     # Insert initial config values
     default_config = {
-        "points_per_message": "1",
-        "points_per_invite": "1000",
-        "points_per_reaction": "5",
-        "points_per_share": "50",
-        "points_per_image": "10",
+        "points_per_message": "5",
+        "points_per_invite": "200",
+        "points_per_reaction": "1",
+        "points_per_share": "20",
+        "points_per_image": "50",
         "notification_channel_id": "YOUR_CHANNEL_ID",
         "daily_points_limit": str(config.DEFAULT_DAILY_POINTS_LIMIT),
     }

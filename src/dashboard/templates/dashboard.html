@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Server Header -->
+<div class="server-header">
+    <img src="{{ server.icon_url|default('https://cdn.discordapp.com/embed/avatars/0.png') }}" 
+         alt="{{ server.name }}" class="server-icon">
+    <div class="server-name">{{ server.name|default('TTP Trading Community') }}</div>
+</div>
+
+<!-- Header Section -->
+<div class="header-section">
+    <!-- Left: User Info -->
+    <div class="user-info">
+        <img src="{{ user.avatar_url|default('https://cdn.discordapp.com/embed/avatars/0.png') }}" 
+             alt="{{ user.name }}" class="avatar">
+        <div class="user-details">
+            <div class="username">{{ user.name }}</div>
+            {% if user.role %}
+            <div class="user-role">{{ user.role }}</div>
+            {% endif %}
+            <div class="join-date">Joined {{ user.join_date|default('Jan 12, 2024') }}</div>
+        </div>
+    </div>
+    
+    <!-- Right: XP Progress -->
+    <div class="xp-section">
+        <div class="xp-text">{{ user.total_points|default(0) }} XP</div>
+        <div class="xp-progress-container">
+            <div class="xp-progress-bar" style="width: {{ progress.level_percentage|default(49) }}%"></div>
+        </div>
+        {% if progress.next_level_points %}
+        <div class="xp-remaining">{{ progress.next_level_points - user.total_points|default(0) }} XP to Level {{ progress.current_level|default(8) + 1 }}</div>
+        {% endif %}
+        <div class="level-indicator">Level {{ progress.current_level|default(8) }}</div>
+        {% if progress.next_reward %}
+        <div class="next-reward">{{ progress.next_reward }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Two Column Layout -->
+<div class="dashboard-grid">
+    <!-- Left Column -->
+    <div>
+        <!-- Global Rank Widget -->
+        <div class="widget">
+            <div class="widget-title">Global Rank</div>
+            <div class="rank-display">#{{ user.rank|default(42) }} / {{ stats.total_users|default(2300) }}</div>
+        </div>
+        
+        <!-- Activity Statistics -->
+        <div class="widget">
+            <div class="widget-title">Activity Statistics</div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">💬</div>
+                    <div class="stat-value">{{ stats.messages|default(1820) }}</div>
+                    <div class="stat-label">Messages</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👍</div>
+                    <div class="stat-value">{{ stats.reactions|default(890) }}</div>
+                    <div class="stat-label">Reactions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📎</div>
+                    <div class="stat-value">{{ stats.attachments|default(156) }}</div>
+                    <div class="stat-label">Attachments</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value">{{ stats.daily_points|default(75) }}</div>
+                    <div class="stat-label">Daily Points</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column -->
+    <div>
+        <!-- Engagement Streak Widget -->
+        <div class="widget">
+            <div class="widget-title">Engagement Streak</div>
+            <div class="streak-container">
+                <div class="streak-count">{{ stats.streak|default(3) }}</div>
+                <div class="streak-label">days streak</div>
+            </div>
+            <div class="streak-grid">
+                {% for i in range(7) %}
+                    <div class="streak-day {% if i >= stats.streak|default(3) %}inactive{% endif %}"></div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Leaderboard Preview Widget -->
+        <div class="widget">
+            <div class="widget-title">Top Members</div>
+            {% for rank, name, points in leaderboard|default([]) %}
+            {% if rank <= 3 %}
+            <div class="leaderboard-item {% if rank == user.rank|default(0) %}user-position{% endif %}">
+                <div class="rank-number">#{{ rank }}</div>
+                <div class="rank-name">{{ name }}</div>
+                <div class="rank-points">{{ points }}</div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- Referral Statistics Widget -->
+        <div class="widget">
+            <div class="widget-title">Referral Statistics</div>
+            <div class="referral-container">
+                <div class="referral-stats">{{ stats.referrals|default(12) }}</div>
+                <div class="referral-label">users referred</div>
+            </div>
+            <div class="referral-earned">earned {{ stats.referral_points|default(350) }} points</div>
+        </div>
+    </div>
+</div>
+
+<!-- Weekly Activity Chart -->
+<div class="chart-wrapper">
+    <div class="chart-title">Weekly Activity</div>
+    <canvas id="activityChart"></canvas>
+</div>
+
+<!-- Chart.js Configuration for Dark Theme -->
+<script>
+// Configure Chart.js for dark theme
+Chart.defaults.color = '#cccccc';
+Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+
+// Activity Chart
+const activityCtx = document.getElementById('activityChart');
+if (activityCtx) {
+    new Chart(activityCtx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Messages',
+                data: {{ activity_data.messages|default([45, 52, 38, 67, 89, 23, 41]) }},
+                borderColor: '#00d4ff',
+                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                tension: 0.4,
+                borderWidth: 3,
+                pointBackgroundColor: '#00d4ff',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+            }, {
+                label: 'Reactions',
+                data: {{ activity_data.reactions|default([12, 18, 15, 22, 31, 8, 14]) }},
+                borderColor: '#8a2be2',
+                backgroundColor: 'rgba(138, 43, 226, 0.1)',
+                tension: 0.4,
+                borderWidth: 3,
+                pointBackgroundColor: '#8a2be2',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+            }, {
+                label: 'Attachments',
+                data: {{ activity_data.attachments|default([3, 5, 2, 8, 12, 1, 4]) }},
+                borderColor: '#ff6b35',
+                backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                tension: 0.4,
+                borderWidth: 3,
+                pointBackgroundColor: '#ff6b35',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+            }, {
+                label: 'Invites',
+                data: {{ activity_data.invites|default([0, 1, 0, 2, 0, 1, 0]) }},
+                borderColor: '#4ecdc4',
+                backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                tension: 0.4,
+                borderWidth: 3,
+                pointBackgroundColor: '#4ecdc4',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff',
+                        font: {
+                            size: 14,
+                            weight: '600'
+                        },
+                        padding: 20
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: { 
+                        color: '#cccccc',
+                        font: {
+                            size: 12,
+                            weight: '600'
+                        }
+                    },
+                    grid: { 
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        lineWidth: 1
+                    }
+                },
+                x: {
+                    ticks: { 
+                        color: '#cccccc',
+                        font: {
+                            size: 12,
+                            weight: '600'
+                        }
+                    },
+                    grid: { 
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        lineWidth: 1
+                    }
+                }
+            }
+        }
+    });
+}
+</script>
+
+{% block footer %}
+<!-- Footer -->
+<div class="footer">
+    <p>Generated on {{ timestamp|default('now') }}</p>
+</div>
+{% endblock %}
+{% endblock %} 
