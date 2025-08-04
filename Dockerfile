@@ -45,9 +45,9 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Install Playwright and browsers in the correct order
 RUN python -m playwright install-deps
-RUN python -m playwright install chromium
+RUN python -m playwright install --force chromium
 
-# Set environment variables for Playwright
+# Set environment variables for Playwright  
 ENV PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright
 
 # Verify Playwright installation and browser availability
