@@ -34,7 +34,8 @@ RUN git clone https://github.com/oyinlola007/deanna874.git .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Install Playwright browsers
-RUN python -m playwright install --with-deps
+RUN playwright install chromium
+RUN playwright install-deps
 
 # Ensure data folder exists for DB
 RUN mkdir -p data
