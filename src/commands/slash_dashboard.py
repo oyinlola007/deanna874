@@ -55,7 +55,7 @@ class DashboardCommands(commands.Cog):
     )
     async def dashboard(self, interaction: discord.Interaction):
         """Generate a personal dashboard for the user."""
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=False)
 
         try:
             user_id = str(interaction.user.id)
@@ -73,7 +73,7 @@ class DashboardCommands(commands.Cog):
             logger.error(f"Error generating dashboard for {interaction.user.id}: {e}")
             await interaction.followup.send(
                 "❌ Sorry, there was an error generating your dashboard. Please try again later.",
-                ephemeral=True,
+                ephemeral=False,
             )
 
     @app_commands.command(
@@ -81,7 +81,7 @@ class DashboardCommands(commands.Cog):
     )
     async def mystats(self, interaction: discord.Interaction):
         """Generate a quick stats snapshot for the user."""
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=False)
 
         try:
             user_id = str(interaction.user.id)
@@ -99,7 +99,7 @@ class DashboardCommands(commands.Cog):
             logger.error(f"Error generating mystats for {interaction.user.id}: {e}")
             await interaction.followup.send(
                 "❌ Sorry, there was an error generating your stats. Please try again later.",
-                ephemeral=True,
+                ephemeral=False,
             )
 
     async def _send_and_cleanup(
@@ -109,7 +109,7 @@ class DashboardCommands(commands.Cog):
         try:
             # Send the image
             file = discord.File(image_path, filename="dashboard.png")
-            await interaction.followup.send(file=file, ephemeral=True)
+            await interaction.followup.send(file=file, ephemeral=False)
         finally:
             # Always delete the local file
             self._delete_local_file(image_path)

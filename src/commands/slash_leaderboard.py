@@ -53,7 +53,7 @@ class SlashLeaderboardCommands(commands.Cog):
     )
     async def leaderboard(self, interaction: discord.Interaction):
         """Generate a leaderboard image showing top 10 users."""
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=False)
 
         try:
             user_id = str(interaction.user.id)
@@ -73,7 +73,7 @@ class SlashLeaderboardCommands(commands.Cog):
             logger.error(f"Error generating leaderboard for {interaction.user.id}: {e}")
             await interaction.followup.send(
                 "❌ Sorry, there was an error generating the leaderboard. Please try again later.",
-                ephemeral=True,
+                ephemeral=False,
             )
 
     async def _send_and_cleanup(
@@ -83,7 +83,7 @@ class SlashLeaderboardCommands(commands.Cog):
         try:
             # Send the image
             file = discord.File(image_path, filename="leaderboard.png")
-            await interaction.followup.send(file=file, ephemeral=True)
+            await interaction.followup.send(file=file, ephemeral=False)
         finally:
             # Always delete the local file
             self._delete_local_file(image_path)
