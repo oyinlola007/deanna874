@@ -70,7 +70,12 @@
             {% block content %}{% endblock %}
         </main>
         
-        {% block footer %}{% endblock %}
+        {% block footer %}
+        <!-- Footer -->
+        <div class="footer">
+            <p>Generated on {{ timestamp|default('now') }}</p>
+        </div>
+        {% endblock %}
     </div>
     
     <!-- Custom JavaScript -->
