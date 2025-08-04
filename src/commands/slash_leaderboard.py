@@ -230,7 +230,7 @@ class SlashLeaderboardCommands(commands.Cog):
                 await browser.close()
         except Exception as e:
             logger.error(f"Playwright browser error: {e}")
-            raise Exception(f"Image generation failed - browser not available: {e}")
+            raise
 
         finally:
             # Clean up temporary HTML file
