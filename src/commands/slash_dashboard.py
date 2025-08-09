@@ -55,6 +55,20 @@ class DashboardCommands(commands.Cog):
     )
     async def dashboard(self, interaction: discord.Interaction):
         """Generate a personal dashboard for the user."""
+        # Check if command is used in the correct channel
+        if not self.dao.is_bot_channel(str(interaction.channel.id)):
+            bot_channel_id = self.dao.get_config("bot_channel_id")
+            if bot_channel_id and interaction.guild:
+                bot_channel = interaction.guild.get_channel(int(bot_channel_id))
+                channel_mention = (
+                    bot_channel.mention if bot_channel else f"<#{bot_channel_id}>"
+                )
+                await interaction.response.send_message(
+                    f"❌ This command can only be used in {channel_mention}",
+                    ephemeral=True,
+                )
+                return
+
         await interaction.response.defer(ephemeral=False)
 
         try:
@@ -89,6 +103,20 @@ class DashboardCommands(commands.Cog):
     )
     async def mystats(self, interaction: discord.Interaction):
         """Generate a quick stats snapshot for the user."""
+        # Check if command is used in the correct channel
+        if not self.dao.is_bot_channel(str(interaction.channel.id)):
+            bot_channel_id = self.dao.get_config("bot_channel_id")
+            if bot_channel_id and interaction.guild:
+                bot_channel = interaction.guild.get_channel(int(bot_channel_id))
+                channel_mention = (
+                    bot_channel.mention if bot_channel else f"<#{bot_channel_id}>"
+                )
+                await interaction.response.send_message(
+                    f"❌ This command can only be used in {channel_mention}",
+                    ephemeral=True,
+                )
+                return
+
         await interaction.response.defer(ephemeral=False)
 
         try:
@@ -166,6 +194,7 @@ class DashboardCommands(commands.Cog):
 
         # Get activity data for chart
         activity_data = self._get_activity_data(stats)
+        activity_labels = self._get_weekday_labels()
 
         return {
             "user": user_info,
@@ -174,6 +203,7 @@ class DashboardCommands(commands.Cog):
             "leaderboard": leaderboard,
             "progress": progress,
             "activity_data": activity_data,
+            "activity_labels": activity_labels,
             "timestamp": self._get_current_timestamp(),
         }
 
@@ -349,6 +379,20 @@ class DashboardCommands(commands.Cog):
             "attachments": stats.get("weekly_attachments", [0] * 7),
             "invites": stats.get("weekly_invites", [0] * 7),
         }
+
+    def _get_weekday_labels(self) -> List[str]:
+        """Return labels for the last 7 days with today as the last label.
+
+        Matches the order used by _get_weekly_activity (6 days ago ... today).
+        """
+        from datetime import datetime, timedelta
+
+        today = datetime.now().date()
+        labels: List[str] = []
+        for i in range(6, -1, -1):
+            day = today - timedelta(days=i)
+            labels.append(day.strftime("%a"))  # Mon, Tue, ...
+        return labels
 
     def _get_user_stats(self, user_id: str) -> Dict:
         """Get comprehensive user statistics from engagement_log."""

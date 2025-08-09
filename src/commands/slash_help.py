@@ -36,7 +36,7 @@ class SlashHelpCommands(commands.Cog):
                 "admin_only": True,
             },
             "⚙️ Configuration": {
-                "commands": ["ttp-setconfig", "ttp-viewconfig"],
+                "commands": ["ttp-setconfig", "ttp-viewconfig", "ttp-setbotchannel"],
                 "admin_only": True,
             },
             "🏆 Milestones": {

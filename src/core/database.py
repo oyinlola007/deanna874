@@ -350,6 +350,11 @@ class Database:
             cur.execute("SELECT key, value FROM config")
             return dict(cur.fetchall())
 
+    def is_bot_channel(self, channel_id: str) -> bool:
+        """Check if the given channel is the configured bot channel."""
+        bot_channel_id = self.get_config("bot_channel_id")
+        return bot_channel_id == channel_id
+
     def get_daily_points(self, discord_id: str) -> int:
         """Get the total points earned by a user in the last 24 hours."""
         with self._connect() as conn:
@@ -995,6 +1000,7 @@ class Database:
                     FROM members m2
                     WHERE m2.discord_id = ?
                 )
+                AND m1.discord_id NOT IN (SELECT discord_id FROM excluded_leaderboard)
                 """,
                 (discord_id,),
             )
@@ -1005,7 +1011,9 @@ class Database:
         """Get total number of members in the database."""
         with self._connect() as conn:
             cur = conn.cursor()
-            cur.execute("SELECT COUNT(*) FROM members")
+            cur.execute(
+                "SELECT COUNT(*) FROM members WHERE discord_id NOT IN (SELECT discord_id FROM excluded_leaderboard)"
+            )
             result = cur.fetchone()
             return result[0] if result else 0
 
