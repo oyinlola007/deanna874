@@ -53,6 +53,20 @@ class SlashLeaderboardCommands(commands.Cog):
     )
     async def leaderboard(self, interaction: discord.Interaction):
         """Generate a leaderboard image showing top 10 users."""
+        # Check if command is used in the correct channel
+        if not self.dao.is_bot_channel(str(interaction.channel.id)):
+            bot_channel_id = self.dao.get_config("bot_channel_id")
+            if bot_channel_id and interaction.guild:
+                bot_channel = interaction.guild.get_channel(int(bot_channel_id))
+                channel_mention = (
+                    bot_channel.mention if bot_channel else f"<#{bot_channel_id}>"
+                )
+                await interaction.response.send_message(
+                    f"❌ This command can only be used in {channel_mention}",
+                    ephemeral=True,
+                )
+                return
+
         await interaction.response.defer(ephemeral=False)
 
         try:

@@ -26,8 +26,14 @@ class MigrationManager:
         self.migrations.append(
             ("2.0", "Add level-based features and role management", self._migrate_to_v2)
         )
-        # Add future migrations here
-        # self.migrations.append(("3.0", "Future migration description", self._migrate_to_v3))
+        # Migration 3.0 - Add bot channel restriction
+        self.migrations.append(
+            (
+                "3.0",
+                "Add bot channel restriction for general commands",
+                self._migrate_to_v3,
+            )
+        )
 
     def get_current_version(self) -> str:
         """Get the current database version."""
@@ -282,6 +288,30 @@ class MigrationManager:
 
         except Exception as e:
             print(f"❌ Migration to version 2.0 failed: {e}")
+            return False
+
+    def _migrate_to_v3(self) -> bool:
+        """Migration to version 3.0 - Add bot channel restriction."""
+        print("🔄 Running migration to version 3.0...")
+
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+
+                # Add bot_channel_id config entry with default value
+                print("1️⃣ Adding bot channel configuration...")
+
+                cursor.execute(
+                    "INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)",
+                    ("bot_channel_id", "1403721700566241311"),
+                )
+
+                conn.commit()
+                print("✅ Migration to version 3.0 completed successfully!")
+                return True
+
+        except Exception as e:
+            print(f"❌ Migration to version 3.0 failed: {e}")
             return False
 
     def _add_column_if_not_exists(

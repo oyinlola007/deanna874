@@ -55,6 +55,7 @@ class SlashMilestoneCommands(commands.Cog):
         value="The point value for the milestone",
         message="The message to display when milestone is reached",
         reward="The reward description for this milestone",
+        role="Optional Discord role to assign when this milestone is reached",
     )
     async def addmilestone(
         self,
@@ -62,8 +63,9 @@ class SlashMilestoneCommands(commands.Cog):
         value: int,
         message: str,
         reward: Optional[str] = None,
+        role: Optional[discord.Role] = None,
     ):
-        """Create new milestone"""
+        """Create new milestone with optional role assignment"""
         # Check if user is admin
         if not dao.is_admin(str(interaction.user.id)):
             await interaction.response.send_message(
@@ -77,9 +79,32 @@ class SlashMilestoneCommands(commands.Cog):
             )
             return
 
-        dao.add_milestone(value, message, reward=reward)
+        # Validate role if provided
+        if role:
+            # Check if bot has permission to manage this role
+            if role >= interaction.guild.me.top_role:
+                await interaction.response.send_message(
+                    f"❌ I don't have permission to manage the '{role.name}' role.",
+                    ephemeral=True,
+                )
+                return
+
+            # Check if role is @everyone or managed by integration
+            if role.is_default() or role.managed:
+                await interaction.response.send_message(
+                    f"❌ Cannot assign the '{role.name}' role (it's either @everyone or managed by an integration).",
+                    ephemeral=True,
+                )
+                return
+
+        # Create milestone with optional role
+        role_name = role.name if role else None
+        dao.add_milestone(value, message, role_name=role_name, reward=reward)
+
+        # Build response message
+        role_text = f" with role '{role.name}'" if role else ""
         await interaction.response.send_message(
-            f"✅ Milestone created: {value:,} points", ephemeral=True
+            f"✅ Milestone created: {value:,} points{role_text}", ephemeral=True
         )
 
     @app_commands.command(
@@ -152,12 +177,16 @@ class SlashMilestoneCommands(commands.Cog):
         name="ttp-setmilestonerole", description="Set role for milestone"
     )
     @app_commands.describe(
-        value="The milestone value", role_name="The role name to assign"
+        milestone_value="The milestone point value",
+        role="The Discord role to assign when this milestone is reached",
     )
     async def setmilestonerole(
-        self, interaction: discord.Interaction, value: int, *, role_name: str
+        self,
+        interaction: discord.Interaction,
+        milestone_value: int,
+        role: discord.Role,
     ):
-        """Set role for milestone"""
+        """Set role for milestone with Discord role picker"""
         # Check if user is admin
         if not dao.is_admin(str(interaction.user.id)):
             await interaction.response.send_message(
@@ -166,37 +195,43 @@ class SlashMilestoneCommands(commands.Cog):
             return
 
         # Check if milestone exists
-        milestone_details = dao.get_milestone_details(value)
+        milestone_details = dao.get_milestone_details(milestone_value)
         if not milestone_details:
             await interaction.response.send_message(
-                f"❌ Milestone {value:,} does not exist.", ephemeral=True
-            )
-            return
-
-        # Check if role exists in the guild
-        role = discord.utils.get(interaction.guild.roles, name=role_name)
-        if not role:
-            await interaction.response.send_message(
-                f"❌ Role '{role_name}' not found in this server.", ephemeral=True
+                f"❌ Milestone {milestone_value:,} does not exist.", ephemeral=True
             )
             return
 
         # Check if bot has permission to manage this role
         if role >= interaction.guild.me.top_role:
             await interaction.response.send_message(
-                f"❌ I don't have permission to manage the '{role_name}' role.",
+                f"❌ I don't have permission to manage the '{role.name}' role.",
                 ephemeral=True,
             )
             return
 
-        if dao.update_milestone_role(value, role_name):
+        # Check if role is @everyone or managed by integration
+        if role.is_default() or role.managed:
             await interaction.response.send_message(
-                f"✅ Role '{role_name}' set for milestone {value:,} points",
+                f"❌ Cannot assign the '{role.name}' role (it's either @everyone or managed by an integration).",
+                ephemeral=True,
+            )
+            return
+
+        # Get current role for this milestone (if any)
+        current_role = dao.get_milestone_role(milestone_value)
+        current_role_text = f" (replacing '{current_role}')" if current_role else ""
+
+        # Update the milestone with the new role
+        if dao.update_milestone_role(milestone_value, role.name):
+            await interaction.response.send_message(
+                f"✅ Role '{role.name}' set for milestone {milestone_value:,} points{current_role_text}",
                 ephemeral=True,
             )
         else:
             await interaction.response.send_message(
-                f"❌ Failed to set role for milestone {value:,} points", ephemeral=True
+                f"❌ Failed to set role for milestone {milestone_value:,} points",
+                ephemeral=True,
             )
 
     @app_commands.command(

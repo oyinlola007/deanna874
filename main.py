@@ -63,10 +63,6 @@ async def on_ready():
 
     # Load Cogs
     extensions = [
-        # "src.commands.admin",
-        # "src.commands.points",
-        # "src.commands.milestones",
-        # "src.commands.tracking",
         "src.commands.slash_points",
         "src.commands.slash_config",
         "src.commands.slash_milestones",

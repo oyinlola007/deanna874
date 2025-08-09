@@ -54,6 +54,31 @@ class SlashConfigCommands(commands.Cog):
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+    @app_commands.command(
+        name="ttp-setbotchannel", description="Set the channel for general bot commands"
+    )
+    @app_commands.describe(
+        channel="The channel where general commands (dashboard, leaderboard, etc.) can be used"
+    )
+    async def setbotchannel(
+        self, interaction: discord.Interaction, channel: discord.TextChannel
+    ):
+        """Set the channel for general bot commands"""
+        # Check if user is admin
+        if not dao.is_admin(str(interaction.user.id)):
+            await interaction.response.send_message(
+                "❌ You don't have permission to use this command.", ephemeral=True
+            )
+            return
+
+        # Set the bot channel config
+        dao.set_config("bot_channel_id", str(channel.id))
+
+        await interaction.response.send_message(
+            f"✅ Bot channel set to {channel.mention}. General commands (dashboard, leaderboard, mystats) can now only be used in this channel.",
+            ephemeral=True,
+        )
+
 
 async def setup(bot):
     await bot.add_cog(SlashConfigCommands(bot))
