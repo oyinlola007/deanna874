@@ -221,6 +221,15 @@ async def on_message(message):
                 if attachment.content_type and attachment.content_type.startswith(
                     "image/"
                 ):
+                    # Check if user has already posted an image in this channel within 24 hours
+                    if dao.has_user_posted_image_in_channel_recently(
+                        user_id, channel_id
+                    ):
+                        logger.info(
+                            f"[DAILY LIMIT] {message.author} already posted an image in #{message.channel.name} within 24 hours - no points awarded"
+                        )
+                        break  # Skip awarding points but still log the message as processed
+
                     image_points = int(dao.get_config("points_per_image") or 10)
 
                     # Apply campaign multiplier if channel is a campaign channel

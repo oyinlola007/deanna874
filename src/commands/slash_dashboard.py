@@ -146,6 +146,51 @@ class DashboardCommands(commands.Cog):
                 ephemeral=False,
             )
 
+    @app_commands.command(
+        name="ttp-viewuserstats",
+        description="[ADMIN] View any user's stats by mentioning them",
+    )
+    @app_commands.describe(user="The user whose stats you want to view")
+    async def viewuserstats(
+        self, interaction: discord.Interaction, user: discord.Member
+    ):
+        """Generate a quick stats snapshot for any user (admin only)."""
+        # Check if user is admin
+        if not self.dao.is_admin(str(interaction.user.id)):
+            await interaction.response.send_message(
+                "❌ You don't have permission to use this command.", ephemeral=True
+            )
+            return
+
+        await interaction.response.defer(ephemeral=True)
+
+        try:
+            target_user_id = str(user.id)
+
+            # Check if guild is available
+            if not interaction.guild:
+                await interaction.followup.send(
+                    "❌ This command can only be used in a server.",
+                    ephemeral=True,
+                )
+                return
+
+            # Generate fresh mystats data for the target user
+            user_data = await self._get_user_mystats_data_for_user(interaction, user)
+
+            # Generate image and upload
+            image_path = await self._generate_mystats_async(user_data, target_user_id)
+
+            # Send the image and delete local file
+            await self._send_and_cleanup(interaction, image_path)
+
+        except Exception as e:
+            logger.error(f"Error generating user stats for {user.id}: {e}")
+            await interaction.followup.send(
+                f"❌ Sorry, there was an error generating {user.mention}'s stats. Please try again later.",
+                ephemeral=True,
+            )
+
     async def _send_and_cleanup(
         self, interaction: discord.Interaction, image_path: str
     ):
@@ -224,6 +269,31 @@ class DashboardCommands(commands.Cog):
         )
         user_info["role"] = self._get_user_role_name(interaction.user)
         user_info["join_date"] = self._format_join_date(interaction.user.joined_at)
+        user_info["rank"] = self.dao.get_user_rank(user_id)
+
+        # Calculate current level (sequential number)
+        current_points = user_info.get("total_points", 0)
+        user_info["level"] = self._calculate_current_level(current_points)
+
+        return user_info
+
+    def _get_or_create_user_for_member(
+        self, member: discord.Member, guild: discord.Guild
+    ) -> Dict:
+        """Get user info or create if doesn't exist for any member."""
+        user_id = str(member.id)
+        user_info = self.dao.get_member_info(user_id)
+
+        if not user_info:
+            # Create new user
+            self.dao.add_member(user_id)
+            user_info = self.dao.get_member_info(user_id)
+
+        # Add Discord user info
+        user_info["name"] = member.display_name
+        user_info["avatar_url"] = str(member.avatar.url) if member.avatar else None
+        user_info["role"] = self._get_user_role_name(member)
+        user_info["join_date"] = self._format_join_date(member.joined_at)
         user_info["rank"] = self.dao.get_user_rank(user_id)
 
         # Calculate current level (sequential number)
@@ -669,6 +739,28 @@ class DashboardCommands(commands.Cog):
 
         # Get or create user
         user_info = self._get_or_create_user(interaction)
+
+        # Get server info
+        server_info = self._get_server_info(interaction)
+
+        # Calculate progress
+        progress = self._calculate_progress(user_info)
+
+        return {
+            "user": user_info,
+            "server": server_info,
+            "progress": progress,
+            "timestamp": self._get_current_timestamp(),
+        }
+
+    async def _get_user_mystats_data_for_user(
+        self, interaction: discord.Interaction, target_user: discord.Member
+    ) -> Dict:
+        """Get data needed for mystats generation for any user (admin command)."""
+        user_id = str(target_user.id)
+
+        # Get or create user for the target user
+        user_info = self._get_or_create_user_for_member(target_user, interaction.guild)
 
         # Get server info
         server_info = self._get_server_info(interaction)
