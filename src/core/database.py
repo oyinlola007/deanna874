@@ -66,6 +66,25 @@ class Database:
             )
             conn.commit()
 
+    def has_user_posted_image_in_channel_recently(
+        self, discord_id: str, channel_id: str
+    ) -> bool:
+        """Check if user has posted an image in the specified channel within the last 24 hours."""
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT COUNT(*) FROM engagement_log 
+                WHERE discord_id = ? 
+                AND activity_type = 'image' 
+                AND channel_id = ? 
+                AND timestamp > datetime('now', '-24 hours')
+                """,
+                (discord_id, channel_id),
+            )
+            result = cur.fetchone()
+            return result[0] > 0 if result else False
+
     def has_user_reacted_to_message(self, discord_id: str, message_id: str) -> bool:
         with self._connect() as conn:
             cur = conn.cursor()

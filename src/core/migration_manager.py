@@ -34,6 +34,14 @@ class MigrationManager:
                 self._migrate_to_v3,
             )
         )
+        # Migration 4.0 - Optimize engagement_log table with indexes
+        self.migrations.append(
+            (
+                "4.0",
+                "Add indexes to engagement_log table for better query performance",
+                self._migrate_to_v4,
+            )
+        )
 
     def get_current_version(self) -> str:
         """Get the current database version."""
@@ -394,6 +402,68 @@ class MigrationManager:
         v2_parts.extend([0] * (max_len - len(v2_parts)))
 
         return v1_parts > v2_parts
+
+    def _migrate_to_v4(self) -> bool:
+        """Migration to version 4.0 - Add indexes to engagement_log table for better query performance."""
+        print("🔄 Running migration to version 4.0...")
+
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+
+                # Add composite index for daily image limit check
+                # Query: WHERE discord_id = ? AND activity_type = 'image' AND channel_id = ? AND timestamp > datetime('now', '-24 hours')
+                print("1️⃣ Adding index for daily image limit queries...")
+                self._create_index_if_not_exists(
+                    cursor,
+                    "idx_engagement_daily_image_check",
+                    "CREATE INDEX idx_engagement_daily_image_check ON engagement_log (discord_id, activity_type, channel_id, timestamp)",
+                )
+
+                # Add composite index for reaction checks
+                # Query: WHERE discord_id = ? AND activity_type = 'reaction' AND activity_object_id = ?
+                print("2️⃣ Adding index for reaction checks...")
+                self._create_index_if_not_exists(
+                    cursor,
+                    "idx_engagement_reaction_check",
+                    "CREATE INDEX idx_engagement_reaction_check ON engagement_log (discord_id, activity_type, activity_object_id)",
+                )
+
+                # Add index for activity type grouping (used in leaderboard stats)
+                # Query: WHERE activity_type = ? GROUP BY discord_id
+                print("3️⃣ Adding index for activity type grouping...")
+                self._create_index_if_not_exists(
+                    cursor,
+                    "idx_engagement_activity_type",
+                    "CREATE INDEX idx_engagement_activity_type ON engagement_log (activity_type, discord_id)",
+                )
+
+                # Add index for daily points calculation
+                # Query: WHERE discord_id = ? AND timestamp >= datetime('now', '-1 day')
+                print("4️⃣ Adding index for daily points calculation...")
+                self._create_index_if_not_exists(
+                    cursor,
+                    "idx_engagement_daily_points",
+                    "CREATE INDEX idx_engagement_daily_points ON engagement_log (discord_id, timestamp)",
+                )
+
+                # Add index for invite checks
+                # Query: WHERE discord_id = ? AND activity_type = 'invite' AND activity_object_id = ?
+                print("5️⃣ Adding index for invite checks...")
+                self._create_index_if_not_exists(
+                    cursor,
+                    "idx_engagement_invite_check",
+                    "CREATE INDEX idx_engagement_invite_check ON engagement_log (discord_id, activity_type, activity_object_id)",
+                )
+
+                conn.commit()
+                print("✅ Migration to version 4.0 completed successfully!")
+                print("📊 Added 5 optimized indexes to engagement_log table")
+                return True
+
+        except Exception as e:
+            print(f"❌ Migration to version 4.0 failed: {e}")
+            return False
 
 
 def run_migrations():

@@ -84,6 +84,10 @@ class SlashHelpCommands(commands.Cog):
                 "commands": ["ttp-dashboard", "ttp-mystats"],
                 "admin_only": False,
             },
+            "📊 Admin Dashboard": {
+                "commands": ["ttp-viewuserstats"],
+                "admin_only": True,
+            },
             "📁 Database": {"commands": ["ttp-exportdb"], "admin_only": True},
             "🎯 Campaign Management": {
                 "commands": [
