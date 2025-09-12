@@ -49,7 +49,7 @@ class SlashConfigCommands(commands.Cog):
             color=discord.Color.blue(),
         )
 
-        for key, value in configs:
+        for key, value in configs.items():
             embed.add_field(name=key, value=str(value), inline=True)
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
